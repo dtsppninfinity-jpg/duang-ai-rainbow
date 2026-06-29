@@ -117,6 +117,32 @@ function compareNewestFirst(a: Lead, b: Lead): number {
  * ถ้าไฟล์เสีย/parse ไม่ได้ จะคืน [] แทนที่จะ throw (กันหน้าแอดมินพัง)
  */
 export async function getLeads(): Promise<Lead[]> {
+  // ถ้าตั้งค่า LEADS_WEBHOOK_URL เป็น Google Apps Script Web App (รองรับ GET คืน {leads})
+  // ให้ดึงรายชื่อจากที่นั่น เพื่อให้หน้าแอดมินทำงานได้บน serverless (เช่น Vercel)
+  // ที่ไฟล์ในเครื่องไม่ถาวร. ถ้า GET ไม่สำเร็จหรือไม่ใช่รูปแบบที่รองรับ (เช่น Formspree)
+  // จะ fallback ไปอ่านไฟล์ local ตามเดิม.
+  const remote = process.env.LEADS_WEBHOOK_URL;
+  if (remote) {
+    try {
+      const res = await fetch(remote, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+      if (res.ok) {
+        const data: unknown = await res.json();
+        const arr = Array.isArray(data)
+          ? data
+          : Array.isArray((data as { leads?: unknown })?.leads)
+            ? (data as { leads: Lead[] }).leads
+            : null;
+        if (arr) return [...(arr as Lead[])].sort(compareNewestFirst);
+      }
+    } catch {
+      // เงียบไว้ — fallback ไปอ่านไฟล์ local ด้านล่าง
+    }
+  }
+
   const leads = await readRaw();
   // newest-first: เรียงตาม createdAt (string compare) + tiebreaker ด้วย id
   return [...leads].sort(compareNewestFirst);
