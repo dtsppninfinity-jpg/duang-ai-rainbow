@@ -28,3 +28,5 @@ yarn-error.log*
 
 # collected leads (local file store)
 /data/leads.json
+
+.vercel

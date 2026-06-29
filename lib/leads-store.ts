@@ -2,6 +2,7 @@ import "server-only";
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import os from "node:os";
 
 /**
  * lib/leads-store.ts
@@ -44,8 +45,23 @@ export type Lead = {
 /** ข้อมูลที่รับเข้ามาเพื่อสร้าง Lead ใหม่ (ยังไม่มี id / createdAt) */
 export type LeadInput = Omit<Lead, "id" | "createdAt">;
 
-// ตำแหน่งไฟล์เก็บข้อมูล: <project-root>/data/leads.json
-const DATA_DIR = path.join(process.cwd(), "data");
+/**
+ * เลือกโฟลเดอร์เก็บไฟล์ให้ "เขียนได้" ตามสภาพแวดล้อม:
+ * - กำหนดเองได้ผ่าน env LEADS_DATA_DIR
+ * - บน serverless (Vercel/AWS Lambda/Netlify) ระบบไฟล์เป็น read-only ยกเว้น /tmp
+ *   จึงเขียนลง os.tmpdir() (ข้อมูลชั่วคราว — ควรตั้ง LEADS_WEBHOOK_URL ให้เก็บถาวร)
+ * - ที่อื่น (dev/self-host) ใช้ <project-root>/data
+ */
+function resolveDataDir(): string {
+  if (process.env.LEADS_DATA_DIR) return process.env.LEADS_DATA_DIR;
+  if (process.env.VERCEL || process.env.AWS_REGION || process.env.NETLIFY) {
+    return path.join(os.tmpdir(), "duang-ai-rainbow");
+  }
+  return path.join(process.cwd(), "data");
+}
+
+// ตำแหน่งไฟล์เก็บข้อมูล (เขียนได้เสมอตามสภาพแวดล้อม)
+const DATA_DIR = resolveDataDir();
 const DATA_FILE = path.join(DATA_DIR, "leads.json");
 
 /**
@@ -172,6 +188,8 @@ export async function addLead(input: LeadInput): Promise<Lead> {
   };
 
   // read-modify-write ภายใต้ lock เพื่อกันการเขียนทับกันจากหลาย request พร้อมกัน
+  // best-effort: ถ้าเขียนไฟล์ไม่ได้ (เช่น serverless FS อ่านอย่างเดียว) จะไม่ทำให้ request พัง
+  try {
   await withLock(async () => {
     // อ่าน array ดิบโดยตรง (ไม่ต้อง sort) -> ใส่ตัวใหม่ไว้หน้าสุด (newest-first)
     const raw = await readRaw();
@@ -193,6 +211,10 @@ export async function addLead(input: LeadInput): Promise<Lead> {
       throw err;
     }
   });
+  } catch {
+    // เขียนไฟล์ไม่สำเร็จ — ปล่อยผ่าน (ดู best-effort ด้านบน) เพื่อไม่ให้ผู้ใช้เจอ error
+    // ถ้ามี LEADS_WEBHOOK_URL ข้อมูลยังถูกส่งไปเก็บปลายทางจริงด้านล่าง
+  }
 
   // ส่งต่อไปยัง backend จริง (n8n / Make / Google Sheets / Line OA) ถ้ามีตั้งค่าไว้
   // best-effort: ถ้า webhook ล้มเหลว เรายังบันทึกไฟล์สำเร็จและคืน lead ตามปกติ
