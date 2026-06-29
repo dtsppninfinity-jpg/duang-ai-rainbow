@@ -6,6 +6,24 @@ import FortuneForm from "@/components/FortuneForm";
 import ResultCard from "@/components/ResultCard";
 import LeadForm from "@/components/LeadForm";
 
+const FORTUNE_IMAGES = [
+  { src: "/generated-fortune/01-rainbow-fortune-hero.png", alt: "Rainbow fortune crystal sphere" },
+  { src: "/generated-fortune/02-lucky-numbers.png", alt: "Lucky numbers charm illustration" },
+  { src: "/generated-fortune/03-love-reading.png", alt: "Love reading crystal hearts" },
+  { src: "/generated-fortune/04-money-reading.png", alt: "Money reading golden charm tree" },
+  { src: "/generated-fortune/05-career-reading.png", alt: "Career reading celestial compass" },
+  { src: "/generated-fortune/06-health-reading.png", alt: "Health reading crystal lotus" },
+  { src: "/generated-fortune/07-zodiac-wheel.png", alt: "Golden zodiac wheel" },
+  { src: "/generated-fortune/08-weekday-colors.png", alt: "Seven weekday color crystals" },
+  { src: "/generated-fortune/09-lucky-colors.png", alt: "Rainbow lucky color ribbons" },
+  { src: "/generated-fortune/10-monthly-reading.png", alt: "Monthly reading moon wheel" },
+  { src: "/generated-fortune/11-free-report.png", alt: "Free fortune report envelope" },
+  { src: "/generated-fortune/12-auspicious-day.png", alt: "Auspicious day golden tray" },
+  { src: "/generated-fortune/13-tarot-cards.png", alt: "Opal fortune cards" },
+  { src: "/generated-fortune/14-compatibility.png", alt: "Compatibility constellations" },
+  { src: "/generated-fortune/15-overall-score.png", alt: "Overall score crystal ring" },
+];
+
 export default function HomePage() {
   const [reading, setReading] = useState<Reading | null>(null);
 
@@ -36,6 +54,17 @@ export default function HomePage() {
 
       {/* Lead capture (post-value soft gate) */}
       <LeadForm reading={reading} />
+
+      <section className="section card fortune-gallery-section">
+        <h2 className="section-title">Rainbow Fortune Gallery</h2>
+        <div className="fortune-gallery">
+          {FORTUNE_IMAGES.map((image) => (
+            <figure className="fortune-shot" key={image.src}>
+              <img src={image.src} alt={image.alt} loading="lazy" />
+            </figure>
+          ))}
+        </div>
+      </section>
 
       {/* About / disclaimer */}
       <section className="section card">
