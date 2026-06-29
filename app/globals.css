@@ -890,10 +890,15 @@ body {
   100% { background-position:   0% 50%; }
 }
 
-/* ทำให้ข้อความที่อยู่บนพื้นรุ้งตรง ๆ ยังอ่านง่าย */
+/* หัวข้อ section เป็นตัวอักษรไล่สีรุ้ง (อยู่บนการ์ด -> อ่านชัด + เข้าธีม) */
 .section-title {
-  color: #fff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  background: var(--rainbow);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: rainbow-slide 9s linear infinite;
 }
 
 .footer {

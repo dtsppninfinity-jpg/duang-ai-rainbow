@@ -30,3 +30,6 @@ yarn-error.log*
 /data/leads.json
 
 .vercel
+
+# local dev preview config (machine-specific paths)
+/.claude/
